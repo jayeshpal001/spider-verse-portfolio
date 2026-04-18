@@ -25,24 +25,58 @@ export default function CameraRig() {
       },
     });
 
-    // 1. Camera Animation: Dive into the Web
-    // Initial Z position 8 hai. Hum isko -10 tak le jayenge (Spidey ke aar-paar)
-    tl.to(camera.position, {
-      z: -10,
-      y: -2, // Thoda niche ki taraf swing
-      ease: "power2.inOut",
-    }, 0);
+    // 1. The Dodge (Spidey ke right shoulder ke paas se swing karte hue nikalna)
+    tl.to(
+      camera.position,
+      {
+        x: 3, // Right ki taraf swing
+        y: -1, // Halka sa niche
+        z: 2, // Spidey ke theek aage
+        duration: 0.15,
+        ease: "power2.inOut",
+      },
+      0,
+    );
 
-    // 2. Camera Rotation: Thoda tilt (swing effect)
-    tl.to(camera.rotation, {
-      x: Math.PI / 8, // Halki si upward look
-      ease: "none",
-    }, 0);
+    // 2. The Deep Dive (Tunnel ke andar jaana)
+    tl.to(
+      camera.position,
+      {
+        x: 0, // Wapas center mein
+        y: 0,
+        z: -55, // Deep tunnel
+        duration: 0.85, // Baaki ka time dive mein
+        ease: "power1.inOut",
+      },
+      0.15,
+    ); // Dodge hone ke baad start hoga
 
+    // 3. The Dynamic Tilt (Speed aur motion feel karne ke liye camera tilt)
+    tl.to(
+      camera.rotation,
+      {
+        z: -Math.PI / 16, // Halka sa barrel roll effect
+        x: Math.PI / 16,
+        duration: 0.5,
+        ease: "power1.inOut",
+      },
+      0,
+    );
+
+    tl.to(
+      camera.rotation,
+      {
+        z: 0, // Wapas seedha hona
+        x: 0,
+        duration: 0.5,
+        ease: "power1.inOut",
+      },
+      0.5,
+    );
     return () => {
       // Cleanup protocol taaki page change hone par memory leak na ho
       tl.kill();
-      ScrollTrigger.getAll().forEach(t => t.kill());
+      ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, [camera]);
 

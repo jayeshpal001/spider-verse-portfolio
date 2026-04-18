@@ -1,66 +1,53 @@
-"use client";
+// "use client";
 
-import { useMemo } from "react";
-import { useGLTF, Float } from "@react-three/drei";
-import { useAppStore } from "@/store/useAppStore";
-import * as THREE from "three";
+// import { useRef, useMemo } from "react";
+// import { useGLTF, useAnimations } from "@react-three/drei";
+// import { useFrame } from "@react-three/fiber";
+// import * as THREE from "three";
 
-interface SpiderManProps {
-  scale?: number;
-  position?: [number, number, number];
-  rotation?: [number, number, number];
-}
+// export default function SpiderMan({ scale = 1.5, position = [0, -2, 0] }) {
+//   const group = useRef<THREE.Group>(null);
+//   const { scene, animations } = useGLTF("/models/spiderman.glb");
+//   const { actions } = useAnimations(animations, group);
 
-export default function SpiderMan({
-  scale = 1,
-  position = [0, 0, 0],
-  rotation = [0, 0, 0],
-}: SpiderManProps) {
-  const setHoveringNode = useAppStore((state) => state.setHoveringNode);
-  const { scene } = useGLTF("/models/spiderman.glb");
+//   // Find the Head bone to make it follow the cursor
+//   const headBone = useMemo(() => {
+//     let head = null;
+//     scene.traverse((child) => {
+//       // Model banane wale ne sarr ki haddi ka naam kya rakha hai, yeh vary karta hai
+//       // Commonly "Head", "mixamorigHead", ya "Neck" hota hai
+//       if (child.isBone && child.name.toLowerCase().includes("head")) {
+//         head = child;
+//       }
+//     });
+//     return head;
+//   }, [scene]);
 
-  useMemo(() => {
-    scene.traverse((object) => {
-      if ((object as THREE.Mesh).isMesh) {
-        // Material processing here if needed later
-      }
-    });
-  }, [scene]);
+//   useFrame((state) => {
+//     // 1. Mouse coordinates ko 3D world space me convert karna
+//     const target = new THREE.Vector3(
+//       (state.pointer.x * state.viewport.width) / 2,
+//       (state.pointer.y * state.viewport.height) / 2,
+//       5 // Z-axis offset so he looks slightly forward, not cross-eyed
+//     );
 
-  return (
-    <Float speed={2.5} rotationIntensity={0.6} floatIntensity={1.2}>
-      <group position={position} rotation={rotation} scale={scale}>
-        {/* The Actual Visible Model (No hover events here) */}
-        <primitive object={scene} />
+//     // 2. Head tracking: Make the head bone look at the target smoothly
+//     if (headBone) {
+//       // Smooth interpolation for natural movement (no jerky robotic snapping)
+//       const currentQuat = headBone.quaternion.clone();
+//       headBone.lookAt(target);
+//       const targetQuat = headBone.quaternion.clone();
+      
+//       // Slerp blends the current rotation with the target rotation
+//       headBone.quaternion.copy(currentQuat).slerp(targetQuat, 0.1); 
+//     }
+//   });
 
-        {/* THE INVISIBLE HITBOX */}
-        <mesh
-          position={[0, 0.2, 0]} // Y-axis ko thoda niche kiya
-          onPointerOver={(e) => {
-            e.stopPropagation();
-            setHoveringNode(true);
-            document.body.style.cursor = "crosshair";
-          }}
-          onPointerOut={(e) => {
-            e.stopPropagation();
-            setHoveringNode(false);
-            document.body.style.cursor = "auto";
-          }}
-        >
-          {/* args: [width, height, depth] -> Size ko Spidey ke hisaab se shrink kiya */}
-          <boxGeometry args={[1, 2.5, 1]} />
+//   return (
+//     <group ref={group} position={position} scale={scale}>
+//       <primitive object={scene} />
+//     </group>
+//   );
+// }
 
-          {/* opacity={0.5} ko opacity={0} kar dein */}
-          <meshBasicMaterial
-            color="red"
-            transparent
-            opacity={0}
-            depthWrite={false}
-          />
-        </mesh>
-      </group>
-    </Float>
-  );
-}
-
-useGLTF.preload("/models/spiderman.glb");
+// useGLTF.preload("/models/spiderman.glb");

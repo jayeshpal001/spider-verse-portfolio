@@ -8,34 +8,36 @@ export default function WebNetwork({ count = 100 }) {
     const pointsRef = useRef<THREE.Points>(null);
     const linesRef = useRef<THREE.LineSegments>(null);
 
-    // Generate random positions for the web nodes (particles)
-    const [positions, linesData] = useMemo(() => {
-        const pos = new Float32Array(count * 3);
-        for (let i = 0; i < count * 3; i++) {
-            // Spread particles in a 10x10x10 area
-            pos[i] = (Math.random() - 0.5) * 10;
-        }
+  // Generate random positions for the web nodes (particles)
+  const [positions, linesData] = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      // Create a massive deep tunnel
+      pos[i * 3] = (Math.random() - 0.5) * 40;     // X-Axis (Width)
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 40; // Y-Axis (Height)
+      pos[i * 3 + 2] = 10 - Math.random() * 80;    // Z-Axis (Depth: from +10 down to -70)
+    }
 
-        // Connect nodes that are close to each other to form the "Web"
-        const lines: number[] = [];
-        for (let i = 0; i < count; i++) {
-            for (let j = i + 1; j < count; j++) {
-                const dx = pos[i * 3] - pos[j * 3];
-                const dy = pos[i * 3 + 1] - pos[j * 3 + 1];
-                const dz = pos[i * 3 + 2] - pos[j * 3 + 2];
-                const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    // Connect nodes that are close to each other
+    const lines: number[] = [];
+    for (let i = 0; i < count; i++) {
+      for (let j = i + 1; j < count; j++) {
+        const dx = pos[i * 3] - pos[j * 3];
+        const dy = pos[i * 3 + 1] - pos[j * 3 + 1];
+        const dz = pos[i * 3 + 2] - pos[j * 3 + 2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-                // If nodes are close enough (threshold: 2.5), connect them with a web thread
-                if (dist < 2.5) {
-                    lines.push(
-                        pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2],
-                        pos[j * 3], pos[j * 3 + 1], pos[j * 3 + 2]
-                    );
-                }
-            }
+        // Threshold badha diya taaki lambe connections bane
+        if (dist < 6) { 
+          lines.push(
+            pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2],
+            pos[j * 3], pos[j * 3 + 1], pos[j * 3 + 2]
+          );
         }
-        return [pos, new Float32Array(lines)];
-    }, [count]);
+      }
+    }
+    return [pos, new Float32Array(lines)];
+  }, [count]);
     // Animate the web to make it feel alive and floating
     useFrame((state) => {
         const time = state.clock.getElapsedTime();
