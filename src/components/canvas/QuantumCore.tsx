@@ -6,120 +6,154 @@ import * as THREE from "three";
 
 export default function QuantumCore({ count = 8000 }) {
   const pointsRef = useRef<THREE.Points>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const { mouse, viewport } = useThree();
 
-  // Generate 8000 particles forming a dense, glowing sphere
-  const [positions, originalPositions, colors] = useMemo(() => {
-    const pos = new Float32Array(count * 3);
-    const orig = new Float32Array(count * 3);
+  // 1. REFINED MATHEMATICS FOR SHARP SHAPES
+  const [shapes, colors] = useMemo(() => {
+    const sphere = new Float32Array(count * 3);
+    const torus = new Float32Array(count * 3);
+    const helix = new Float32Array(count * 3);
+    const box = new Float32Array(count * 3);
     const col = new Float32Array(count * 3);
     
-    const colorBlue = new THREE.Color("#4fa8f7"); // MergePath Blue
-    const colorGreen = new THREE.Color("#00ff88"); // Bringo Web3 Green
-    const colorRed = new THREE.Color("#ff4b4b"); // Gang-App Red
+    const colorBlue = new THREE.Color("#4fa8f7");
+    const colorGreen = new THREE.Color("#00ff88");
+    const colorRed = new THREE.Color("#ff4b4b");
+
+    // Pre-calculate grid dimensions for the perfect Cube
+    const gridSize = Math.ceil(Math.pow(count, 1 / 3));
+    const step = 6 / gridSize;
 
     for (let i = 0; i < count; i++) {
-      // Create a spherical shell distribution
+      const i3 = i * 3;
+
+      // SPHERE (Dense Core)
       const r = 2.5 + Math.random() * 1.5; 
       const theta = 2 * Math.PI * Math.random();
       const phi = Math.acos(2 * Math.random() - 1);
+      sphere[i3] = r * Math.sin(phi) * Math.cos(theta);
+      sphere[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      sphere[i3 + 2] = r * Math.cos(phi);
 
-      const x = r * Math.sin(phi) * Math.cos(theta);
-      const y = r * Math.sin(phi) * Math.sin(theta);
-      const z = r * Math.cos(phi);
+      // TORUS (Tighter, cleaner Ring)
+      const tRadius = 3.5;
+      const tTube = 0.5 + Math.random() * 0.5; // Thinner tube for cleaner look
+      const u = Math.random() * Math.PI * 2;
+      const v = Math.random() * Math.PI * 2;
+      torus[i3] = (tRadius + tTube * Math.cos(v)) * Math.cos(u);
+      torus[i3 + 1] = (tRadius + tTube * Math.cos(v)) * Math.sin(u);
+      torus[i3 + 2] = tTube * Math.sin(v);
 
-      pos[i * 3] = x;
-      pos[i * 3 + 1] = y;
-      pos[i * 3 + 2] = z;
+      // DNA HELIX (Two sharp, distinct strands)
+      const hHeight = (Math.random() - 0.5) * 12;
+      const hAngle = hHeight * 1.5;
+      const strandOffset = (i % 2 === 0) ? 0 : Math.PI; // Separate into two strands
+      const hRadius = 2.5;
+      helix[i3] = hRadius * Math.cos(hAngle + strandOffset) + (Math.random() - 0.5) * 0.5;
+      helix[i3 + 1] = hHeight;
+      helix[i3 + 2] = hRadius * Math.sin(hAngle + strandOffset) + (Math.random() - 0.5) * 0.5;
 
-      orig[i * 3] = x;
-      orig[i * 3 + 1] = y;
-      orig[i * 3 + 2] = z;
+      // CUBE GRID (Perfect structured lattice)
+      const gx = (i % gridSize);
+      const gy = Math.floor(i / gridSize) % gridSize;
+      const gz = Math.floor(i / (gridSize * gridSize));
+      box[i3] = (gx * step) - 3 + (Math.random() - 0.5) * 0.2; // Slight jitter for energy feel
+      box[i3 + 1] = (gy * step) - 3 + (Math.random() - 0.5) * 0.2;
+      box[i3 + 2] = (gz * step) - 3 + (Math.random() - 0.5) * 0.2;
 
-      // Randomize glowing colors for a cyber-aesthetic look
+      // Colors
       const mixedColor = colorBlue.clone().lerp(Math.random() > 0.5 ? colorGreen : colorRed, Math.random());
-      col[i * 3] = mixedColor.r;
-      col[i * 3 + 1] = mixedColor.g;
-      col[i * 3 + 2] = mixedColor.b;
+      col[i3] = mixedColor.r;
+      col[i3 + 1] = mixedColor.g;
+      col[i3 + 2] = mixedColor.b;
     }
-    return [pos, orig, col];
+    return [{ sphere, torus, helix, box }, col];
   }, [count]);
 
-  // The Physics Engine: Animating the particles every single frame
-  useFrame((state) => {
-    if (!pointsRef.current) return;
-    
-    const positions = pointsRef.current.geometry.attributes.position.array as Float32Array;
-    const time = state.clock.getElapsedTime();
+  const currentPositions = useMemo(() => new Float32Array(count * 3), [count]);
 
-    // Rotate the entire core slowly like a planet
+  useFrame((state) => {
+    if (!pointsRef.current || !groupRef.current) return;
+    
+    const time = state.clock.getElapsedTime();
+    const camZ = state.camera.position.z;
+
+    // 2. SMART POSITIONING: Slide to the right when scrolling to project cards
+    const isScrollingDown = camZ < -5;
+    const targetGroupX = isScrollingDown ? 4 : 0; // Move Right if scrolling, Center if at top
+    
+    // Smoothly interpolate the group's position
+    groupRef.current.position.x += (targetGroupX - groupRef.current.position.x) * 0.05;
+    groupRef.current.position.y = state.camera.position.y;
+    groupRef.current.position.z = camZ - 8; // Stay exactly 8 units in front of camera
+
+    // Slow planetary rotation
     pointsRef.current.rotation.y = time * 0.1;
     pointsRef.current.rotation.z = time * 0.05;
 
-    // Convert 2D mouse coordinates to 3D world space
     const mouseX = (mouse.x * viewport.width) / 2;
     const mouseY = (mouse.y * viewport.height) / 2;
-    const mouseVec = new THREE.Vector3(mouseX, mouseY, 0);
+    
+    // Adjust mouse vector based on the group's shifted X position
+    const mouseVec = new THREE.Vector3(mouseX - groupRef.current.position.x, mouseY - groupRef.current.position.y, 0);
+
+    // Shape transition targets based on depth
+    let targetShape = shapes.sphere;
+    if (camZ < -5 && camZ >= -20) targetShape = shapes.torus;
+    else if (camZ < -20 && camZ >= -35) targetShape = shapes.helix;
+    else if (camZ < -35) targetShape = shapes.box;
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
       
-      const px = positions[i3];
-      const py = positions[i3 + 1];
-      const pz = positions[i3 + 2];
+      const px = currentPositions[i3];
+      const py = currentPositions[i3 + 1];
+      const pz = currentPositions[i3 + 2];
       
-      const origX = originalPositions[i3];
-      const origY = originalPositions[i3 + 1];
-      const origZ = originalPositions[i3 + 2];
+      const targetX = targetShape[i3];
+      const targetY = targetShape[i3 + 1];
+      const targetZ = targetShape[i3 + 2];
 
-      // The "Breathing" Wave Effect
-      const wave = Math.sin(time * 2 + origX * 2) * 0.1;
-      const targetX = origX + wave;
-      const targetY = origY + wave;
-      const targetZ = origZ + wave;
-
-      // Transform particle position to world space for mouse collision
       const pointVec = new THREE.Vector3(px, py, pz);
       pointVec.applyEuler(pointsRef.current.rotation);
-      
       const dist = pointVec.distanceTo(mouseVec);
       
-      // The "Magnetic Repel" Effect (This creates the WOW factor)
-      if (dist < 2.5) {
-        const force = (2.5 - dist) / 2.5; 
+      // Magnetic Repel
+      if (dist < 3.0) { // Increased repel radius slightly
+        const force = (3.0 - dist) / 3.0; 
         const dir = pointVec.clone().sub(mouseVec).normalize();
         
-        // Push particles away violently
-        positions[i3] += dir.x * force * 0.3;
-        positions[i3 + 1] += dir.y * force * 0.3;
-        positions[i3 + 2] += dir.z * force * 0.3;
+        currentPositions[i3] += dir.x * force * 0.4;
+        currentPositions[i3 + 1] += dir.y * force * 0.4;
+        currentPositions[i3 + 2] += dir.z * force * 0.4;
       } else {
-        // Smoothly snap back to original position (Liquid-like tension)
-        positions[i3] += (targetX - px) * 0.08;
-        positions[i3 + 1] += (targetY - py) * 0.08;
-        positions[i3 + 2] += (targetZ - pz) * 0.08;
+        // Smooth morphing back to target shape
+        currentPositions[i3] += (targetX - px) * 0.08; // Slightly faster snap
+        currentPositions[i3 + 1] += (targetY - py) * 0.08;
+        currentPositions[i3 + 2] += (targetZ - pz) * 0.08;
       }
     }
     
-    // Notify Three.js that the array has changed and needs re-rendering
     pointsRef.current.geometry.attributes.position.needsUpdate = true;
   });
 
   return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
-      </bufferGeometry>
-      {/* Additive blending makes overlapping particles glow intensely like energy */}
-      <pointsMaterial 
-        size={0.03} 
-        vertexColors 
-        transparent 
-        opacity={0.8} 
-        blending={THREE.AdditiveBlending} 
-        depthWrite={false}
-      />
-    </points>
+    <group ref={groupRef}>
+      <points ref={pointsRef}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[currentPositions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[colors, 3]} />
+        </bufferGeometry>
+        <pointsMaterial 
+          size={0.035} // Slightly larger particles for better glow
+          vertexColors 
+          transparent 
+          opacity={0.9} 
+          blending={THREE.AdditiveBlending} 
+          depthWrite={false}
+        />
+      </points>
+    </group>
   );
 }
