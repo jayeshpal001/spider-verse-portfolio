@@ -6,7 +6,7 @@ export const projects = [
     tech: ["Next.js", "TypeScript", "Tailwind", "Node.js"],
     description: "A high-performance digital platform engineered for seamless user experience and complex state management.",
     problem: "Developers struggle with fragmented tools. Syncrocode unifies the workspace, boosting productivity by 40% with zero lag.",
-    image: "/images/syncrocode.png", // Create an 'images' folder in 'public' and add placeholders
+    image: "/images/syncrocode.mp4", // Create an 'images' folder in 'public' and add placeholders
     liveLink: "https://your-live-link.com",
     sourceLink: "https://github.com/your-username",
     color: "#ff00ff"
@@ -14,11 +14,11 @@ export const projects = [
   {
     id: "kalakaar-ventures",
     title: "KalakaarVentures",
-    role: "Frontend Architect",
+    role: "Frontend Architect", 
     tech: ["React.js", "Redux", "Framer Motion"],
     description: "A visually immersive platform tailored for creators and artists, featuring fluid animations and interactive UI components.",
     problem: "Artists lacked a premium digital stage. This platform provides a highly animated, lag-free gallery experience to showcase art.",
-    image: "/images/kalakaar.jpg",
+    image: "/images/kalakaarventures.mp4",
     liveLink: "https://your-live-link.com",
     sourceLink: "https://github.com/your-username",
     color: "#eab308" 

@@ -9,7 +9,6 @@ import MindPalaceSection from "@/components/dom/MindPalaceSection";
 import MemoryVaultSection from "@/components/dom/MemoryVaultSection";
 import EndgameSection from "@/components/dom/EndgameSection";
 import SystemBoot from "@/components/ui/SystemBoot";
-import CyberPath from "@/components/ui/CyberPath"; // NEW: Imported the animated path
 
 export default function Home() {
   const [isBooting, setIsBooting] = useState(true);
@@ -37,10 +36,6 @@ export default function Home() {
       {/* 2D DOM LAYER */}
       <div className={`relative z-10 pointer-events-none transition-opacity duration-1000 ${isBooting ? 'opacity-0' : 'opacity-100'}`}>
         
-        {/* NEW: THE GLOWING NERVE CENTER PATH */}
-        <CyberPath />
-        
-        {/* HERO SECTION */}
         <section className="relative flex h-screen items-center justify-center">
           <h1 className="text-7xl md:text-9xl font-bold text-white opacity-80 mix-blend-overlay">
             JAYESH PAL
@@ -48,14 +43,11 @@ export default function Home() {
           <HeroUI />
         </section>
 
-        {/* NEW: Tightly packed container to remove massive boring gaps */}
-        <div className="flex flex-col gap-32 pb-32">
-          <ProjectsSection />
-          <ConstellationSection />
-          <MindPalaceSection />
-          <MemoryVaultSection />
-          <EndgameSection />
-        </div>
+        <ProjectsSection />
+        <ConstellationSection />
+        <MindPalaceSection />
+        <MemoryVaultSection />
+        <EndgameSection />
         
       </div>
     </main>
